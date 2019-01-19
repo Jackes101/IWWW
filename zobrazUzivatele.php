@@ -49,6 +49,7 @@ if (isset($_SESSION["role"])) {
         <th>Přijmení</th>
         <th>Telefon</th>
         <th>Město</th>
+        <th>Role</th>
 
     </tr>
     <?php
@@ -63,12 +64,13 @@ if (isset($_SESSION["role"])) {
             echo "<tr>";
             echo "";
             echo "<td>" . $row['id_uzivatel']. "</td>";
-            echo "<td><a class='svytCer' href='upravSluzbu.php?idsl=".$row['id_uzivatel']."&typ=up '> " . $row['email']. "</a></td>";
+            echo "<td><a class='svytCer' href='register.php?idUser=".$row['id_uzivatel']."'> " . $row['email']. "</a></td>";
 
             echo "<td>" . $row['jmeno']. "</td>";
             echo "<td>" . $row['prijmeni']. "</td>";
             echo "<td>" . $row['telefon']. "</td>";
             echo "<td>" . $row['mesto']. "</td>";
+            echo "<td>" . $row['role']. "</td>";
             //echo "<td>" . $row['popis']. "</td>";
 
 

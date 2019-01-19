@@ -15,7 +15,41 @@ $username = $password = $confirm_password = $jmeno = $prijmeni= $telefon = $adre
 $username_err = $password_err = $confirm_password_err = $jmeno_err = $prijmeni_err= $telefon_err= $adresa_err= $mesto_err= $psc_err="";
 
 
+if(isset($_GET["idUser"])){
 
+
+    $sql = "SELECT * FROM uzivatel ";
+
+    $link->query('set names utf8');
+    $result = $link->query($sql);
+
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+
+            $username= $row['email'];
+
+            $jmeno= $row['jmeno'];
+            $prijmeni= $row['prijmeni'];
+            $telefon= $row['telefon'];
+            $mesto= $row['mesto'];
+            $role= $row['role'];
+            $adresa= $row['adresa'];
+            $psc= $row['psc'];
+            $password=$row['heslo'];
+            $confirm_password=$row['heslo'];
+
+
+
+
+            echo "</tr>";
+
+        }
+    }
+
+
+$_SESSION['idUser']=$_GET['idUser'];
+
+}
 
 
 // Processing form data when form is submitted
@@ -26,6 +60,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     if(!filter_var(trim($_POST["username"]), FILTER_VALIDATE_EMAIL)){
         $username_err = "Prosím zadejte email.";
     } else{
+
+        if(!isset($_SESSION['idUser'])){
         // Prepare a select statement
         $sql = "SELECT id_uzivatel FROM uzivatel WHERE email = ?";
 
@@ -53,6 +89,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
         // Close statement
         mysqli_stmt_close($stmt);
+
+       }
+       else{
+           $username = trim($_POST["username"]);
+       }
     }
 
 
@@ -124,38 +165,74 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     if(empty($username_err) && empty($password_err) && empty($confirm_password_err) && empty($jmeno_err)&& empty($prijmeni_err) && empty($adresa_err)&&
     empty ($mesto_err)&& empty($psc_err)&& empty($telefon_err)){
 
-        // Prepare an insert statement
-        $sql = "INSERT INTO uzivatel ( jmeno, prijmeni, adresa, role, email, telefon, heslo, Mesto, PSC) VALUES ( ?,?,?,?,?,?,?,?,?)";
+        if(!isset($_SESSION['idUser'])) {
+            // Prepare an insert statement
+            $sql = "INSERT INTO uzivatel ( jmeno, prijmeni, adresa, role, email, telefon, heslo, Mesto, PSC) VALUES ( ?,?,?,?,?,?,?,?,?)";
 
-        if($stmt = mysqli_prepare($link, $sql)){
-            // Bind variables to the prepared statement as parameters
-            mysqli_stmt_bind_param($stmt, "sssssissi", $param_jmeno, $param_prijmeni, $param_adresa, $param_role,
-                $param_username, $param_telefon, $param_password, $param_Mesto, $param_PSC);
+            if ($stmt = mysqli_prepare($link, $sql)) {
+                // Bind variables to the prepared statement as parameters
+                mysqli_stmt_bind_param($stmt, "sssssissi", $param_jmeno, $param_prijmeni, $param_adresa, $param_role,
+                    $param_username, $param_telefon, $param_password, $param_Mesto, $param_PSC);
 
-            // Set parameters
-            $param_jmeno=$jmeno;
-            $param_prijmeni=$prijmeni;
-            $param_adresa=$adresa;
-            if (isset($_SESSION["role"])) {
-                if ($_SESSION["role"] == "Admin")
-                    $param_role="Admin";
-            }else {
-                $param_role = "Uzivatel";
+                // Set parameters
+                $param_jmeno = $jmeno;
+                $param_prijmeni = $prijmeni;
+                $param_adresa = $adresa;
+
+                $param_role = trim($_POST["roleUz"]);
+
+                $param_username = $username;
+                $param_telefon = $telefon;
+                //$param_password = password_hash($password, PASSWORD_DEFAULT); // Creates a password hash
+                $param_password = $password;
+                $param_Mesto = $mesto;
+                $param_PSC = $psc;
+
+                // Attempt to execute the prepared statement
+                if (mysqli_stmt_execute($stmt)) {
+                    // Redirect to login page
+                    header("location: login.php");
+                } else {
+                    echo "Something went wrong. Please try again later.";
+                }
+
+        }
+
+
+
+
+        }else{
+
+            $sql = "UPDATE uzivatel SET jmeno=?, prijmeni=?, adresa=?, role=?, telefon=?, heslo=?, Mesto=?, PSC=? where email=?";
+            if ($stmt = mysqli_prepare($link, $sql)) {
+                // Bind variables to the prepared statement as parameters
+                mysqli_stmt_bind_param($stmt, "ssssissis", $param_jmeno, $param_prijmeni, $param_adresa, $param_role
+                    , $param_telefon, $param_password, $param_Mesto, $param_PSC , $param_username);
+
+                // Set parameters
+                $param_jmeno = $jmeno;
+                $param_prijmeni = $prijmeni;
+                $param_adresa = $adresa;
+
+                $param_role = trim($_POST["roleUz"]);
+
+                $param_username = $username;
+                $param_telefon = $telefon;
+                //$param_password = password_hash($password, PASSWORD_DEFAULT); // Creates a password hash
+                $param_password = $password;
+                $param_Mesto = $mesto;
+                $param_PSC = $psc;
+
+                // Attempt to execute the prepared statement
+                if (mysqli_stmt_execute($stmt)) {
+                    // Redirect to login page
+                    header("location: zobrazUzivatele.php");
+                } else {
+                    echo "Something went wrong. Please try again later.";
+                }
+
             }
-            $param_username = $username;
-            $param_telefon=$telefon;
-            //$param_password = password_hash($password, PASSWORD_DEFAULT); // Creates a password hash
-            $param_password=$password;
-            $param_Mesto= $mesto;
-            $param_PSC=$psc;
 
-            // Attempt to execute the prepared statement
-            if(mysqli_stmt_execute($stmt)){
-                // Redirect to login page
-                header("location: login.php");
-            } else{
-                echo "Something went wrong. Please try again later.";
-            }
         }
 
         // Close statement
@@ -192,13 +269,31 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
         ?>
         <p>Prosím vyplňte registrační formulář.</p>
-        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+
+        <form id="fSel" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+
+            <div class="vPravo">
             <div class="form-group <?php echo (!empty($username_err)) ? 'has-error' : ''; ?>">
                 <label>Email</label>
-                <input type="text" name="username" class="form-control" value="<?php echo $username; ?>">
+                <input type="text" name="username" class="form-control in" value="<?php echo $username; ?>">
                 <label class="help-block"><?php echo $username_err; ?></label>
             </div>
 
+                <div class="form-group uhni ">
+                    <label>Role</label>
+            <select name="roleUz" class="form-control in" >
+                <option selected value="Uzivatel">Uživatel</option>
+                <?php
+                if( isset($_SESSION["role"])) {
+                    if ($_SESSION["role"]=="Admin")
+                       echo "<option value='Admin'>Administrátor</option>";
+                }
+                ?>
+
+
+            </select>
+                </div>
+        </div>
 
         <div class="vPravo">
                 <div class="form-group <?php echo (!empty($jmeno_err)) ? 'has-error' : ''; ?>">
@@ -254,7 +349,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                     <label class="help-block"><?php echo $password_err; ?></label>
                 </div>
 
-                <div class="form-group uhni <?php echo (!empty($confirm_password_err)) ? 'has-error' : ''; ?>">
+                <div class="form-group uhni <?php echo (!empty($confirm_password_err)) ? ' has-error' : ''; ?>">
                     <label>Potvrdit Heslo</label>
                     <input type="password" name="confirm_password" class="form-control in" value="<?php echo $confirm_password; ?>">
                     <label class="help-block"><?php echo $confirm_password_err; ?></label>
@@ -264,12 +359,15 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
 
             <div class="form-group">
-                <input type="submit" class="btn btn-primary" value="Submit">
+                <input type="submit" class="btn btn-primary" value="Potvrdit">
                 <input type="reset" class="btn btn-default" value="Reset">
             </div>
 
 
-            <p>Již máte účet? <a href="login.php">Přihlašte se zde</a>.</p>
+            <?php
+            if (!isset($_SESSION["role"]))
+             echo "<p>Již máte účet? <a href='login.php'>Přihlašte se zde</a>.</p>";
+            ?>
         </form>
     </div>
 </body>

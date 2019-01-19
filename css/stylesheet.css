@@ -72,3 +72,8 @@ label {
 .in{
     width: 350px
 }
+
+#fSel select{
+    height: 47px;
+    width: 375px;
+}
