@@ -58,7 +58,7 @@ if (isset($_SESSION["role"])) {
 
     $link->query('set names utf8');
     $result = $link->query($sql);
-
+    unset($_SESSION['idUser']);
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             echo "<tr>";

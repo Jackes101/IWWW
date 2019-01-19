@@ -226,6 +226,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                 // Attempt to execute the prepared statement
                 if (mysqli_stmt_execute($stmt)) {
                     // Redirect to login page
+                    unset($_SESSION['idUser']);
                     header("location: zobrazUzivatele.php");
                 } else {
                     echo "Something went wrong. Please try again later.";
@@ -260,13 +261,13 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 <body>
     <div class="wrapper">
         <?php
-        if (isset($_SESSION["role"])) {
-            if ($_SESSION["role"] == "Admin")
-                echo "<h2>Registrace Administrátora</h2>";
-        }
-        else
-            echo "<h2>Registrace Uživatele</h2>";
+        if( isset($_SESSION["idUser"]))
+            echo "<h2> Úprava Uživatele</h2>";
+            else{
 
+
+            echo "<h2>Registrace Uživatele</h2>";
+            }
         ?>
         <p>Prosím vyplňte registrační formulář.</p>
 
@@ -275,7 +276,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             <div class="vPravo">
             <div class="form-group <?php echo (!empty($username_err)) ? 'has-error' : ''; ?>">
                 <label>Email</label>
-                <input type="text" name="username" class="form-control in" value="<?php echo $username; ?>">
+                <input type="text" name="username" class="form-control in" value="<?php echo $username; ?>" <?php
+                if( isset($_SESSION["idUser"]))
+                    echo " readonly";?>>
                 <label class="help-block"><?php echo $username_err; ?></label>
             </div>
 
